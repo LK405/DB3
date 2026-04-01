@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Los Fallos en Bases de Datos</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <div class="background-blobs"></div>
+
+  <div class="glass-container">
+    <header>
+      <h1>Los Fallos en Bases de Datos</h1>
+      <div class="header-info">
+        <p><strong>Curso:</strong> Base de Datos 2</p>
+        <p><strong>Tarea:</strong> Clasificación de los fallos en SQL Server</p>
+        <p><strong>Carrera:</strong> Ingeniería en Sistemas</p>
+        <p><strong>Catedrático:</strong> Carlos Augusto Godínez Guzmán</p>
+      </div>
+    </header>
+
+    <main>
+      <section class="card">
+        <h2>Fallos de Transacción</h2>
+        <p><strong>¿Qué es?</strong> Son errores que ocurren cuando una transacción no logra completarse correctamente, ya sea por conflictos de concurrencia, errores lógicos o interrupciones inesperadas.</p>
+        <p><strong>¿Cómo se maneja?</strong> Se utilizan mecanismos como COMMIT y ROLLBACK. Si la transacción se completa exitosamente, se confirma con COMMIT; si ocurre un fallo, se revierte con ROLLBACK para mantener la consistencia.</p>
+        <p><strong>Ejemplo real:</strong> En una aplicación bancaria, un usuario transfiere dinero de una cuenta a otra. Si el sistema descuenta el monto de la primera cuenta pero falla antes de acreditar la segunda, la transacción se revierte.</p>
+        <pre>
+BEGIN TRY
+   BEGIN TRANSACTION;
+   UPDATE Cuentas SET Saldo = Saldo - 500 WHERE IdCuenta = 1;
+   UPDATE Cuentas SET Saldo = Saldo + 500 WHERE IdCuenta = 2;
+   COMMIT TRANSACTION;
+END TRY
+BEGIN CATCH
+   ROLLBACK TRANSACTION;
+   PRINT 'Error en la transacción. Se ha revertido.';
+END CATCH;</pre>
+      </section>
+
+      <section class="card">
+        <h2>Fallos de Sistema</h2>
+        <p><strong>¿Qué es?</strong> Se producen cuando el sistema operativo o el servidor de base de datos se interrumpe inesperadamente, por ejemplo, por un corte de energía o un error del software.</p>
+        <p><strong>¿Cómo se maneja?</strong> Las bases de datos modernas emplean logs de transacciones para recuperar el estado anterior al fallo. Al reiniciar, el sistema revisa el log y restaura la base de datos al último estado válido.</p>
+        <p><strong>Ejemplo real:</strong> Un supermercado actualiza su inventario y ocurre un apagón. Al reiniciar, el sistema usa los registros para restaurar el inventario.</p>
+        <pre>
+SELECT name, recovery_model_desc
+FROM sys.databases;</pre>
+      </section>
+
+      <section class="card">
+        <h2>Fallos de Medio</h2>
+        <p><strong>¿Qué es?</strong> Son fallos físicos en el hardware, como daños en el disco duro o corrupción de archivos.</p>
+        <p><strong>¿Cómo se maneja?</strong> Se requiere restaurar la base de datos desde una copia de seguridad y aplicar los logs de transacciones para recuperar la información perdida.</p>
+        <p><strong>Ejemplo real:</strong> Una empresa sufre daños en el disco duro de su servidor. Gracias a respaldos diarios y logs, logra recuperar la información hasta el día anterior al fallo.</p>
+        <pre>
+RESTORE DATABASE MiBase
+FROM DISK = 'C:\\Backups\\MiBase.bak'
+WITH RECOVERY;</pre>
+      </section>
+
+      <section class="card">
+        <h2>Errores de Usuario/Operación</h2>
+        <p><strong>¿Qué es?</strong> Son errores provocados por acciones humanas, como borrar datos accidentalmente o ejecutar consultas incorrectas.</p>
+        <p><strong>¿Cómo se maneja?</strong> Se previenen con permisos adecuados, validaciones en las aplicaciones y respaldos frecuentes. Algunas bases de datos permiten recuperar datos eliminados recientemente.</p>
+        <p><strong>Ejemplo real:</strong> Un empleado elimina por error la tabla de clientes. Gracias a un respaldo automático, la empresa restaura la información sin mayores pérdidas.</p>
+        <pre>
+RESTORE DATABASE MiBase
+FROM DISK = 'C:\\Backups\\MiBase.bak'
+WITH RECOVERY;</pre>
+      </section>
+    </main>
+
+    <footer>
+      <p>UMG  | Ingeniería en Sistemas</p>
+    </footer>
+  </div>
+
+</body>
+</html>

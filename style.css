@@ -1,0 +1,121 @@
+/* variables para q sea mas facil canbiar colores */
+:root {
+  --accent: #0078d4;
+  --glass: rgba(255, 255, 255, 0.7);
+  --linea: rgba(255, 255, 255, 0.3);
+  --texto: #202020;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  margin: 0;
+  padding: 0;
+  background: linear-gradient(135deg, #c3d8e6 0%, #e8d9ed 50%, #f3e7e9 100%);
+  display: flex;
+  justify-content: center;
+  min-height: 100vh;
+  color: var(--texto);
+}
+
+/* las bolas d color de fondo para q el blur resalte */
+.background-blobs {
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  z-index: -1;
+  background: 
+    radial-gradient(circle at 10% 20%, rgba(0, 120, 212, 0.15) 0%, transparent 40%),
+    radial-gradient(circle at 90% 80%, rgba(158, 0, 255, 0.1) 0%, transparent 40%);
+}
+
+.glass-container {
+  max-width: 950px;
+  width: 90%;
+  margin: 40px 20px;
+  background: var(--glass);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-radius: 12px;
+  border: 1px solid var(--linea);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  animation: subir 0.6s ease-out;
+}
+
+header {
+  padding: 40px;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid var(--linea);
+}
+
+header h1 {
+  margin: 0;
+  font-size: 2.2rem;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+.header-info {
+  margin-top: 15px;
+  font-size: 0.95rem;
+  opacity: 0.8;
+}
+
+main {
+  padding: 30px;
+}
+
+/* las secciones como tarjetitas de windows */
+.card {
+  background: rgba(255, 255, 255, 0.3);
+  margin-bottom: 30px;
+  padding: 25px;
+  border-radius: 10px;
+  border: 1px solid var(--linea);
+  transition: transform 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-3px);
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.card h2 {
+  margin-top: 0;
+  color: var(--accent);
+  font-size: 1.5rem;
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+  padding-bottom: 10px;
+}
+
+/* los cuadros de codigo */
+pre {
+  background: rgba(0, 0, 0, 0.05);
+  padding: 15px;
+  border-radius: 8px;
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 0.9rem;
+  overflow-x: auto;
+  border: 1px solid rgba(0, 0, 0, 0.03);
+  line-height: 1.4;
+}
+
+footer {
+  padding: 20px;
+  text-align: center;
+  font-size: 0.85rem;
+  background: rgba(0, 0, 0, 0.02);
+  border-top: 1px solid var(--linea);
+}
+
+/* animacion para k no aparesca de golpe */
+@keyframes subir {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* para q en el movil no se desconfigure todo */
+@media (max-width: 600px) {
+  header h1 { font-size: 1.6rem; }
+  main { padding: 15px; }
+}
