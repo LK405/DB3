@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Blog Técnico: Fallos en Bases de Datos</title>
+  <title>BD3: Fallos en BD</title>
   <link rel="stylesheet" href="style.css">
   <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
@@ -11,75 +11,182 @@
 
   <div class="background-blobs"></div>
 
-  <div class="glass-container">
-    <header>
-      <div class="badge">Ingeniería en Sistemas</div>
-      <h1>Gestión Crítica: Los Fallos en Bases de Datos</h1>
-      <div class="header-info">
-        <p><strong>Autor:</strong> Estudiante de Ingeniería</p>
-        <p><strong>Catedrático:</strong> Carlos Augusto Godínez Guzmán</p>
-        <p><strong>Curso:</strong> Base de Datos 2</p>
+  <div class="app-container">
+    <nav class="side-nav">
+      <div class="app-logo">
+        <span class="icon">🛡️</span>
+        <span class="app-name">Contenido</span>
       </div>
-    </header>
+      <div class="nav-links">
+        <a href="#inicio" class="active"><span class="icon">🏠</span> Inicio</a>
+        <a href="#transaccion"><span class="icon">🔄</span> Transacción</a>
+        <a href="#sistema"><span class="icon">💻</span> Sistema</a>
+        <a href="#medio"><span class="icon">💽</span> Medio</a>
+        <a href="#usuario"><span class="icon">👤</span> Usuario</a>
+      </div>
+      <div class="user-profile">
+      
+      </div>
+    </nav>
 
-    <main>
-      <article class="intro">
-        <p>En el mundo de la ingeniería de datos, la disponibilidad y la integridad son pilares fundamentales. Sin embargo, ningun sistema es infalible. A continuacion, analizamos los fallos segun su origen y el impacto que tienen en SQL Server.</p>
-      </article>
+    <main class="main-content">
+      <header id="inicio">
+        <h1>Clasificación Crítica de Fallos</h1>
+        <div class="header-info">
+          <p>Curso: Base de Datos 2 | Catedrático: Carlos Godínez</p>
+        </div>
+      </header>
 
-      <section class="card">
-        <div class="category">Nivel Lógico</div>
-        <h2>1. Fallos de Transacción</h2>
-        <p><strong>Origen y Alcance:</strong> Estos fallos ocurren a nivel de unidad de trabajo logica. Su alcance suele limitarse a la transaccion actual, sin afectar la integridad global de la base de datos si se manejan correctamente.</p>
-        <p><strong>Profundización:</strong> Pueden ser causados por errores de desbordamiento, violaciones de integridad referencial (llaves foraneas) o por el famoso "Deadlock" (bloqueo mutuo) donde dos procesos se esperan eternamente.</p>
-        <p><strong>Manejo Profesional:</strong> La propiedad **ACID** (Atomicidad, Consistencia, Aislamiento y Durabilidad) es la que nos salva aqui. Usamos bloques `TRY...CATCH` para asegurar que el `ROLLBACK` limpie cualquier residuo de un intento fallido.</p>
-        <p><strong>Ejemplo Real:</strong> Un sistema de inscripciones universitarias donde un estudiante intenta registrarse en un curso cupo lleno. El sistema intenta descontar el cupo, detecta que es 0, genera un error logico y debe revertir toda la operacion para no dejar datos inconsistentes.</p>
-        <pre>
+      <div class="content-scroll">
+        <article class="featured-card">
+           <div class="featured-text">
+            <!-- <h2>Integridad y Disponibilidad</h2> -->
+            <p>En SQL Server, la gestión de fallos no es opcional, es fundamental para la supervivencia del negocio. Analizar los fallos según su origen y alcance nos permite diseñar estrategias de recuperación robustas (DRP) que garanticen la continuidad operativa.</p>
+          </div>
+        </article>
+
+        <section id="transaccion" class="card-grid">
+          
+          <div class="card-text">
+            <h2><span class="icon">🔄</span> Fallos de Transacción</h2>
+            <p><strong>Origen y Alcance:</strong> Estos fallos se originan a nivel lógico, dentro del flujo de la unidad de trabajo. Su alcance suele limitarse a la transacción en ejecución, sin afectar la integridad física de los datos si el motor maneja correctamente el rollback.</p>
+            <p><strong>Ejemplo Real:</strong> En una transferencia bancaria, el sistema descuenta el saldo de la Cuenta A pero el servidor falla antes de acreditar a la Cuenta B. El rollback automático asegura que el dinero se reintegre a A instantáneamente.</p>
+            <pre>
 BEGIN TRY
    BEGIN TRANSACTION;
-   -- intento de transaccion
+   -- restamos el saldo aki
    UPDATE Cuentas SET Saldo = Saldo - 500 WHERE IdCuenta = 1;
-   UPDATE Cuentas SET Saldo = Saldo + 500 WHERE IdCuenta = 2;
+   UPDATE Cuentas SET Saldo = Saldo + 500 WHERE IdCuenta = 2; -- si esto falla
    COMMIT TRANSACTION;
 END TRY
 BEGIN CATCH
+   -- clavo, regresamos todo como estaba
    ROLLBACK TRANSACTION;
-   PRINT 'Error detectado: Transaccion revertida para mantener ACID.';
+   PRINT 'Error. Rollback para q no se pierda el dato';
 END CATCH;</pre>
-      </section>
+          </div>
+        </section>
 
-      <section class="card">
-        <div class="category">Nivel Software/Energía</div>
-        <h2>2. Fallos de Sistema (Crash)</h2>
-        <p><strong>Origen y Alcance:</strong> El origen es externo al motor de la base de datos, usualmente fallos en el Sistema Operativo, falta de memoria RAM o cortes de energia electrica. Su alcance afecta a todas las transacciones activas en memoria volatil.</p>
-        <p><strong>Profundización:</strong> SQL Server utiliza un mecanismo llamado **Write-Ahead Logging (WAL)**. Esto significa que ningun dato se escribe en el archivo `.mdf` (datos) sin antes haber sido registrado en el `.ldf` (log). Al reiniciar tras un "crash", el motor realiza un proceso de *Recovery* automatico.</p>
-        <p><strong>Ejemplo Real:</strong> Un servidor de un supermercado que procesa cientos de ventas por minuto sufre un apagon. Al volver la luz, el motor lee el Log de Transacciones y aplica las que estaban confirmadas (Redo) y deshace las que quedaron a medias (Undo).</p>
-      </section>
+        <section id="sistema" class="card-grid alt-layout">
+          <div class="card-text">
+            <h2><span class="icon">💻</span> Fallos de Sistema</h2>
+            <p><strong>Origen y Alcance:</strong> Se originan por fallas de hardware externo (apagones) o errores del sistema operativo. Su alcance es mayor, pues afecta a todas las transacciones que estaban activas en la memoria volátil (RAM) en el momento del "crash".</p>
+            <p><strong>Ejemplo Real:</strong> Un servidor de inventario sufre un apagón repentino. Al reiniciar, SQL Server usa el Log de Transacciones para asegurar que las ventas confirmadas persistan (Redo) y las incompletas se reviertan (Undo).</p>
+            <pre>
+-- comando para ver q modelo d recuperacion tiene la bd
+-- para saber q tan protegidos estamos
+SELECT name, recovery_model_desc FROM sys.databases;</pre>
+          </div>
+          <div class="card-image-container">
+            <img src="./sistema.jpg" alt="Fallo Sistema" class="section-image">
+          </div>
+        </section>
 
-      <section class="card">
-        <div class="category">Nivel Hardware</div>
-        <h2>3. Fallos de Medio (Media Failure)</h2>
-        <p><strong>Origen y Alcance:</strong> Es el fallo mas temido. Su origen es el daño fisico de los platos del disco duro, falla en la controladora RAID o corrupcion de sectores donde reside la base de datos. Su alcance es total o parcial sobre los datos persistentes.</p>
-        <p><strong>Profundización:</strong> Aqui la recuperacion no es automatica. Dependemos de la estrategia de Backup (Full, Differential, Log). La corrupcion de paginas de datos puede detectarse con el comando `DBCC CHECKDB`.</p>
-        <p><strong>Ejemplo Real:</strong> El disco duro principal de un servidor contable hace un ruido extraño y deja de leerse. La unica solucion es reemplazar el hardware, montar el ultimo Backup Completo y aplicar los Backups de Log generados cada 15 minutos para minimizar la perdida de datos.</p>
-        <pre>
--- Restauracion profesional tras fallo de disco
-RESTORE DATABASE MiBase FROM DISK = 'Z:\\Seguridad\\FullBackup.bak' WITH NORECOVERY;
-RESTORE LOG MiBase FROM DISK = 'Z:\\Seguridad\\LogUltimo.trn' WITH RECOVERY;</pre>
-      </section>
+        <section id="medio" class="card-grid">
+          <div class="card-image-container">
+            <img src="./hardware.jpg" alt="Fallo Medio" class="section-image">
+          </div>
+          <div class="card-text">
+            <h2><span class="icon">💽</span> Fallos de Medio</h2>
+            <p><strong>Origen y Alcance:</strong> Tienen su origen en fallas físicas del hardware de almacenamiento (discos duros corruptos, RAID fallido). Su alcance es crítico, pues puede dañar o eliminar definitivamente los archivos .mdf y .ldf.</p>
+            <p><strong>Ejemplo Real:</strong> El disco sólido de un servidor contable falla y deja de leerse. La recuperación requiere montar un disco nuevo y restaurar el último Backup Completo y los Backups d Log secuenciales.</p>
+            <pre>
+-- restaurando la bd x q el disco se arruino
+RESTORE DATABASE MiBase FROM DISK = 'C:\\Backups\\MiBase.bak' WITH NORECOVERY;
+-- aki aplicamos los logs para q no se pierda info
+RESTORE LOG MiBase FROM DISK = 'C:\\Backups\\LogActual.trn' WITH RECOVERY;</pre>
+          </div>
+        </section>
 
-      <section class="card">
-        <h2>4. Errores de Usuario y Operación</h2>
-        <div class="category">Nivel Humano</div>
-        <p><strong>Origen y Alcance:</strong> El origen es el factor humano: negligencia, falta de pericia o fatiga. El alcance puede ser devastador, como borrar una tabla entera de produccion pensando que era la de pruebas.</p>
-        <p><strong>Profundización:</strong> A diferencia de los otros fallos, el motor de la base de datos "cree" que la instruccion es valida (un `DELETE` sin `WHERE` es sintacticamente correcto). La prevencion se basa en el Principio de Menor Privilegio (PoLP).</p>
-        <p><strong>Ejemplo Real:</strong> Un DBA junior ejecuta un `DROP TABLE Clientes` en el servidor de produccion por error. La recuperacion implica tecnicas de "Point-in-Time Recovery" para volver exactamente al segundo antes de que el usuario cometiera el error.</p>
-      </section>
+        <section id="usuario" class="card-grid alt-layout">
+          <div class="card-text">
+            <h2><span class="icon">👤</span> Errores de Usuario</h2>
+            <p><strong>Origen y Alcance:</strong> Originados por la negligencia o accidentes humanos (borrados accidentales, consultas mal formadas). Su alcance es catastrófico, ya que el motor ejecuta órdenes válidas que destruyen datos en segundos.</p>
+            <p><strong>Ejemplo Real:</strong> Un DBA junior ejecuta un `DELETE FROM Clientes` sin cláusula `WHERE` en producción, borrando millones d registros. La única solución es usar los respaldos de log para volver al estado de la BD un minuto antes del error.</p>
+            <pre>
+-- toca recuperar el respaldo q se hizo antes d q borraran todo x error
+RESTORE DATABASE MiBase FROM DISK = 'C:\\Backups\\RespaldoSeguro.bak' WITH RECOVERY;</pre>
+          </div>
+          <div class="card-image-container">
+            <img src="./user.jpg" alt="Error Usuario" class="section-image">
+          </div>
+        </section>
+
+        <!-- SECCIÓN EXTRA: Mecanismos de Recuperación -->
+        <section id="recuperacion" class="card-grid alt-layout">
+          <div class="card-text">
+            <h2><span class="icon">⚙️</span> Mecanismos de Recuperación</h2>
+            <p><strong>Write-Ahead Logging (WAL):</strong> SQL Server garantiza que toda modificación quede primero en el Log de Transacciones antes de escribirse en disco. Esto permite reconstruir el estado exacto de la BD ante cualquier fallo inesperado.</p>
+            <p><strong>Checkpoints:</strong> El motor realiza puntos de control periódicos que "vacían" las páginas sucias de la memoria al disco, reduciendo el tiempo de recuperación tras un crash. Sin checkpoints, el proceso de Redo podría tomar horas.</p>
+            <p><strong>Algoritmo ARIES:</strong> Es el algoritmo base de SQL Server. Opera en tres fases: <em>Análisis</em> (identifica transacciones activas al momento del fallo), <em>Redo</em> (reaplica todos los cambios confirmados) y <em>Undo</em> (revierte las transacciones incompletas).</p>
+            <pre>
+-- Ver el espacio usado por el log de transacciones
+DBCC SQLPERF(LOGSPACE);
+
+-- Forzar un checkpoint manual
+CHECKPOINT;
+
+-- Ver transacciones activas actualmente
+SELECT * FROM sys.dm_tran_active_transactions;</pre>
+          </div>
+          <div class="card-image-container">
+            <img src="https://img.freepik.com/free-vector/data-recovery-concept-illustration_114360-7893.jpg" alt="Recuperación" class="section-image">
+          </div>
+        </section>
+
+        <!-- SECCIÓN EXTRA: Tabla Comparativa -->
+        <section style="margin-bottom: 50px;">
+          <h2 class="table-title"><span class="icon">📊</span> Tabla Comparativa de Fallos</h2>
+          <p style="color:#555; margin-bottom:20px;">Resumen ejecutivo para evaluar riesgo y estrategia de recuperación según el tipo de fallo.</p>
+          <div style="overflow-x:auto;">
+            <table class="comparison-table">
+              <thead>
+                <tr>
+                  <th>Tipo de Fallo</th>
+                  <th>Origen</th>
+                  <th>Alcance</th>
+                  <th>Pérdida de Datos</th>
+                  <th>Mecanismo Clave</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>🔄 Transacción</strong></td>
+                  <td>Lógico / Aplicación</td>
+                  <td>Una transacción</td>
+                  <td>Ninguna</td>
+                  <td>ROLLBACK automático</td>
+                </tr>
+                <tr>
+                  <td><strong>💻 Sistema</strong></td>
+                  <td>SO / Hardware externo</td>
+                  <td>Todas las TX en RAM</td>
+                  <td>Datos en memoria volátil</td>
+                  <td>Log + Redo/Undo (ARIES)</td>
+                </tr>
+                <tr>
+                  <td><strong>💽 Medio</strong></td>
+                  <td>Disco / Almacenamiento</td>
+                  <td>Archivos .mdf / .ldf</td>
+                  <td>Alta (puede ser total)</td>
+                  <td>Backup Completo + Log</td>
+                </tr>
+                <tr>
+                  <td><strong>👤 Usuario</strong></td>
+                  <td>Error humano</td>
+                  <td>Tablas / BD completa</td>
+                  <td>Muy alta (inmediata)</td>
+                  <td>Point-in-Time Recovery</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+      </div> <footer>
+        <p>UMG - Ingeniería en Sistemas 2026</p>
+      </footer>
     </main>
-
-    <footer>
-      <p>UMG- Ingeniería en Sistemas 2026</p>
-    </footer>
   </div>
 
 </body>
