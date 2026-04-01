@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Los Fallos en Bases de Datos</title>
+  <title>Blog Técnico: Fallos en Bases de Datos</title>
   <link rel="stylesheet" href="style.css">
   <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
@@ -13,69 +13,72 @@
 
   <div class="glass-container">
     <header>
-      <h1>Los Fallos en Bases de Datos</h1>
+      <div class="badge">Ingeniería en Sistemas</div>
+      <h1>Gestión Crítica: Los Fallos en Bases de Datos</h1>
       <div class="header-info">
-        <p><strong>Curso:</strong> Base de Datos 2</p>
-        <p><strong>Tarea:</strong> Clasificación de los fallos en SQL Server</p>
-        <p><strong>Carrera:</strong> Ingeniería en Sistemas</p>
+        <p><strong>Autor:</strong> Estudiante de Ingeniería</p>
         <p><strong>Catedrático:</strong> Carlos Augusto Godínez Guzmán</p>
+        <p><strong>Curso:</strong> Base de Datos 2</p>
       </div>
     </header>
 
     <main>
+      <article class="intro">
+        <p>En el mundo de la ingeniería de datos, la disponibilidad y la integridad son pilares fundamentales. Sin embargo, ningun sistema es infalible. A continuacion, analizamos los fallos segun su origen y el impacto que tienen en SQL Server.</p>
+      </article>
+
       <section class="card">
-        <h2>Fallos de Transacción</h2>
-        <p><strong>¿Qué es?</strong> Son errores que ocurren cuando una transacción no logra completarse correctamente, ya sea por conflictos de concurrencia, errores lógicos o interrupciones inesperadas.</p>
-        <p><strong>¿Cómo se maneja?</strong> Se utilizan mecanismos como COMMIT y ROLLBACK. Si la transacción se completa exitosamente, se confirma con COMMIT; si ocurre un fallo, se revierte con ROLLBACK para mantener la consistencia.</p>
-        <p><strong>Ejemplo real:</strong> En una aplicación bancaria, un usuario transfiere dinero de una cuenta a otra. Si el sistema descuenta el monto de la primera cuenta pero falla antes de acreditar la segunda, la transacción se revierte.</p>
+        <div class="category">Nivel Lógico</div>
+        <h2>1. Fallos de Transacción</h2>
+        <p><strong>Origen y Alcance:</strong> Estos fallos ocurren a nivel de unidad de trabajo logica. Su alcance suele limitarse a la transaccion actual, sin afectar la integridad global de la base de datos si se manejan correctamente.</p>
+        <p><strong>Profundización:</strong> Pueden ser causados por errores de desbordamiento, violaciones de integridad referencial (llaves foraneas) o por el famoso "Deadlock" (bloqueo mutuo) donde dos procesos se esperan eternamente.</p>
+        <p><strong>Manejo Profesional:</strong> La propiedad **ACID** (Atomicidad, Consistencia, Aislamiento y Durabilidad) es la que nos salva aqui. Usamos bloques `TRY...CATCH` para asegurar que el `ROLLBACK` limpie cualquier residuo de un intento fallido.</p>
+        <p><strong>Ejemplo Real:</strong> Un sistema de inscripciones universitarias donde un estudiante intenta registrarse en un curso cupo lleno. El sistema intenta descontar el cupo, detecta que es 0, genera un error logico y debe revertir toda la operacion para no dejar datos inconsistentes.</p>
         <pre>
 BEGIN TRY
    BEGIN TRANSACTION;
+   -- intento de transaccion
    UPDATE Cuentas SET Saldo = Saldo - 500 WHERE IdCuenta = 1;
    UPDATE Cuentas SET Saldo = Saldo + 500 WHERE IdCuenta = 2;
    COMMIT TRANSACTION;
 END TRY
 BEGIN CATCH
    ROLLBACK TRANSACTION;
-   PRINT 'Error en la transacción. Se ha revertido.';
+   PRINT 'Error detectado: Transaccion revertida para mantener ACID.';
 END CATCH;</pre>
       </section>
 
       <section class="card">
-        <h2>Fallos de Sistema</h2>
-        <p><strong>¿Qué es?</strong> Se producen cuando el sistema operativo o el servidor de base de datos se interrumpe inesperadamente, por ejemplo, por un corte de energía o un error del software.</p>
-        <p><strong>¿Cómo se maneja?</strong> Las bases de datos modernas emplean logs de transacciones para recuperar el estado anterior al fallo. Al reiniciar, el sistema revisa el log y restaura la base de datos al último estado válido.</p>
-        <p><strong>Ejemplo real:</strong> Un supermercado actualiza su inventario y ocurre un apagón. Al reiniciar, el sistema usa los registros para restaurar el inventario.</p>
-        <pre>
-SELECT name, recovery_model_desc
-FROM sys.databases;</pre>
+        <div class="category">Nivel Software/Energía</div>
+        <h2>2. Fallos de Sistema (Crash)</h2>
+        <p><strong>Origen y Alcance:</strong> El origen es externo al motor de la base de datos, usualmente fallos en el Sistema Operativo, falta de memoria RAM o cortes de energia electrica. Su alcance afecta a todas las transacciones activas en memoria volatil.</p>
+        <p><strong>Profundización:</strong> SQL Server utiliza un mecanismo llamado **Write-Ahead Logging (WAL)**. Esto significa que ningun dato se escribe en el archivo `.mdf` (datos) sin antes haber sido registrado en el `.ldf` (log). Al reiniciar tras un "crash", el motor realiza un proceso de *Recovery* automatico.</p>
+        <p><strong>Ejemplo Real:</strong> Un servidor de un supermercado que procesa cientos de ventas por minuto sufre un apagon. Al volver la luz, el motor lee el Log de Transacciones y aplica las que estaban confirmadas (Redo) y deshace las que quedaron a medias (Undo).</p>
       </section>
 
       <section class="card">
-        <h2>Fallos de Medio</h2>
-        <p><strong>¿Qué es?</strong> Son fallos físicos en el hardware, como daños en el disco duro o corrupción de archivos.</p>
-        <p><strong>¿Cómo se maneja?</strong> Se requiere restaurar la base de datos desde una copia de seguridad y aplicar los logs de transacciones para recuperar la información perdida.</p>
-        <p><strong>Ejemplo real:</strong> Una empresa sufre daños en el disco duro de su servidor. Gracias a respaldos diarios y logs, logra recuperar la información hasta el día anterior al fallo.</p>
+        <div class="category">Nivel Hardware</div>
+        <h2>3. Fallos de Medio (Media Failure)</h2>
+        <p><strong>Origen y Alcance:</strong> Es el fallo mas temido. Su origen es el daño fisico de los platos del disco duro, falla en la controladora RAID o corrupcion de sectores donde reside la base de datos. Su alcance es total o parcial sobre los datos persistentes.</p>
+        <p><strong>Profundización:</strong> Aqui la recuperacion no es automatica. Dependemos de la estrategia de Backup (Full, Differential, Log). La corrupcion de paginas de datos puede detectarse con el comando `DBCC CHECKDB`.</p>
+        <p><strong>Ejemplo Real:</strong> El disco duro principal de un servidor contable hace un ruido extraño y deja de leerse. La unica solucion es reemplazar el hardware, montar el ultimo Backup Completo y aplicar los Backups de Log generados cada 15 minutos para minimizar la perdida de datos.</p>
         <pre>
-RESTORE DATABASE MiBase
-FROM DISK = 'C:\\Backups\\MiBase.bak'
-WITH RECOVERY;</pre>
+-- Restauracion profesional tras fallo de disco
+RESTORE DATABASE MiBase FROM DISK = 'Z:\\Seguridad\\FullBackup.bak' WITH NORECOVERY;
+RESTORE LOG MiBase FROM DISK = 'Z:\\Seguridad\\LogUltimo.trn' WITH RECOVERY;</pre>
       </section>
 
       <section class="card">
-        <h2>Errores de Usuario/Operación</h2>
-        <p><strong>¿Qué es?</strong> Son errores provocados por acciones humanas, como borrar datos accidentalmente o ejecutar consultas incorrectas.</p>
-        <p><strong>¿Cómo se maneja?</strong> Se previenen con permisos adecuados, validaciones en las aplicaciones y respaldos frecuentes. Algunas bases de datos permiten recuperar datos eliminados recientemente.</p>
-        <p><strong>Ejemplo real:</strong> Un empleado elimina por error la tabla de clientes. Gracias a un respaldo automático, la empresa restaura la información sin mayores pérdidas.</p>
-        <pre>
-RESTORE DATABASE MiBase
-FROM DISK = 'C:\\Backups\\MiBase.bak'
-WITH RECOVERY;</pre>
+        <h2>4. Errores de Usuario y Operación</h2>
+        <div class="category">Nivel Humano</div>
+        <p><strong>Origen y Alcance:</strong> El origen es el factor humano: negligencia, falta de pericia o fatiga. El alcance puede ser devastador, como borrar una tabla entera de produccion pensando que era la de pruebas.</p>
+        <p><strong>Profundización:</strong> A diferencia de los otros fallos, el motor de la base de datos "cree" que la instruccion es valida (un `DELETE` sin `WHERE` es sintacticamente correcto). La prevencion se basa en el Principio de Menor Privilegio (PoLP).</p>
+        <p><strong>Ejemplo Real:</strong> Un DBA junior ejecuta un `DROP TABLE Clientes` en el servidor de produccion por error. La recuperacion implica tecnicas de "Point-in-Time Recovery" para volver exactamente al segundo antes de que el usuario cometiera el error.</p>
       </section>
     </main>
 
     <footer>
-      <p>UMG  | Ingeniería en Sistemas</p>
+      <p>UMG - Ingeniería en Sistemas 2026</p>
     </footer>
   </div>
 
